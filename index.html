@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>키라키라 네컷</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Mochiy+Pop+One&display=swap">
+<style>
+/* 레이아웃: 왼쪽 큰 촬영 부스(라이브 카메라) + 오른쪽 세로 네컷 스트립 미리보기. 결과는 '라쿠가키(낙서)' 꾸미기 화면으로 전환 */
+:root{
+  --pink:#ff4fa3;
+  --pink-soft:#ffc8e6;
+  --bubble:#fff4fa;
+  --plum:#3b1f4f;
+  --mint:#7fe8d3;
+  --lemon:#ffe066;
+  --lav:#c3a8ff;
+  --display:"Mochiy Pop One","Jua",system-ui,sans-serif;
+  --body:"Jua","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--body);
+  color:var(--plum);
+  background-color:#ffd9ee;
+  background-image:
+    radial-gradient(circle at 20% 10%,rgba(255,255,255,.7) 0 120px,transparent 300px),
+    radial-gradient(rgba(255,255,255,.75) 3.5px,transparent 4px),
+    radial-gradient(rgba(255,255,255,.75) 3.5px,transparent 4px),
+    linear-gradient(135deg,#ffc4e4 0%,#e9d6ff 45%,#ccf6ff 75%,#fff1c2 100%);
+  background-size:auto,36px 36px,36px 36px,100% 100%;
+  background-position:0 0,0 0,18px 18px,0 0;
+  background-attachment:fixed;
+  padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{display:flex;flex-direction:column;gap:2px}
+.logo .jp{
+  font-family:var(--display);font-size:clamp(34px,6vw,58px);line-height:1;letter-spacing:.02em;
+  color:var(--pink);
+  -webkit-text-stroke:2px var(--plum);
+  text-shadow:4px 4px 0 #fff,6px 6px 0 var(--plum);
+  transform:rotate(-2deg);transform-origin:left bottom;
+}
+.logo .kr{font-family:var(--display);font-size:16px;letter-spacing:.12em;color:var(--plum);padding-left:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;border:2.5px solid var(--plum);border-radius:999px;
+  padding:7px 14px;font-size:15px;box-shadow:3px 3px 0 var(--plum);white-space:nowrap
+}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:#bbb;flex:none}
+.chip[data-s="ok"] .dot{background:#2bd48e;box-shadow:0 0 0 3px rgba(43,212,142,.25)}
+.chip[data-s="wait"] .dot{background:var(--lemon);animation:blink 1s infinite}
+.chip[data-s="err"] .dot{background:#ff5b5b}
+@keyframes blink{50%{opacity:.3}}
+
+/* ---------- booth ---------- */
+.booth{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start}
+.stage-card{
+  background:var(--pink);border:3px solid var(--plum);border-radius:34px;padding:14px;
+  box-shadow:8px 8px 0 var(--plum);position:relative;min-width:0
+}
+.stage-card::before{ /* holographic top band */
+  content:"♡ SMILE ♡ POSE ♡ KIRA KIRA ♡ SMILE ♡ POSE ♡ KIRA KIRA ♡";
+  display:block;font-family:var(--display);font-size:13px;letter-spacing:.2em;color:#fff;
+  white-space:nowrap;overflow:hidden;text-align:center;padding:0 0 10px
+}
+.stage{
+  position:relative;aspect-ratio:4/3;width:100%;max-width:100%;border-radius:24px;overflow:hidden;
+  background:#2a1838;border:6px solid #fff
+}
+.stage video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+.spark{position:absolute;font-size:34px;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(59,31,79,.35));animation:twinkle 2.4s ease-in-out infinite}
+.spark.s1{top:10px;left:14px}
+.spark.s2{top:16px;right:18px;font-size:26px;animation-delay:.6s}
+.spark.s3{bottom:14px;left:20px;font-size:24px;animation-delay:1.1s}
+.spark.s4{bottom:10px;right:14px;animation-delay:1.7s}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(18deg)}}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.splash{
+  pointer-events:auto;background:rgba(42,24,56,.72);backdrop-filter:blur(6px);
+  text-align:center;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff
+}
+.splash h2{font-family:var(--display);font-size:clamp(22px,3.4vw,34px);margin:0;line-height:1.3;text-wrap:balance}
+.splash p{margin:0;font-size:17px;opacity:.9;max-width:34ch;line-height:1.5}
+.splash .err{color:var(--lemon)}
+
+.btn{
+  font-family:var(--display);font-size:18px;color:var(--plum);
+  background:var(--lemon);border:3px solid var(--plum);border-radius:999px;
+  padding:12px 26px;cursor:pointer;box-shadow:4px 4px 0 var(--plum);
+  transition:transform .1s ease,box-shadow .1s ease
+}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--plum)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--plum)}
+.btn:focus-visible,.swatch:focus-visible,.stk:focus-visible,.tool:focus-visible,.toggle:focus-visible{outline:3px dashed var(--pink);outline-offset:3px}
+.btn.big{font-size:22px;padding:16px 34px}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.white{background:#fff}
+
+.hint{
+  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,.94);border:3px solid var(--plum);border-radius:999px;
+  padding:8px 20px 8px 8px;box-shadow:4px 4px 0 var(--plum);width:max-content;max-width:calc(100% - 24px)
+}
+.ring{width:58px;height:58px;position:relative;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:var(--pink-soft)}
+.ring .bar{stroke:var(--pink);transition:stroke-dashoffset .08s linear}
+.ring .ico{position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-family:var(--emoji)}
+.hint b{font-family:var(--display);font-size:17px;display:block;font-weight:400}
+.hint small{font-size:14px;opacity:.75}
+
+.count{
+  font-family:var(--display);font-size:clamp(120px,22vw,240px);line-height:1;color:#fff;
+  -webkit-text-stroke:6px var(--pink);paint-order:stroke fill;
+  text-shadow:0 8px 0 var(--plum);
+}
+.count.pop{animation:pop .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.12);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:scale(.85);opacity:.0}}
+.shot-label{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  background:var(--plum);color:#fff;border-radius:999px;padding:8px 18px;
+  font-family:var(--display);font-size:16px;white-space:nowrap;display:flex;gap:10px;align-items:center
+}
+.shot-label em{font-style:normal;color:var(--lemon)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:flash .45s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.ok{font-family:var(--display);font-size:clamp(48px,8vw,90px);color:var(--lemon);-webkit-text-stroke:4px var(--plum);paint-order:stroke fill;animation:pop .9s cubic-bezier(.2,1.6,.4,1)}
+
+/* ---------- side ---------- */
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:#fff;border:3px solid var(--plum);border-radius:24px;padding:14px;box-shadow:5px 5px 0 var(--plum)}
+.panel h3{font-family:var(--display);font-size:14px;font-weight:400;margin:0 0 10px;letter-spacing:.06em;display:flex;justify-content:space-between}
+.panel h3 span{color:var(--pink)}
+.slots{display:grid;grid-template-columns:1fr;gap:8px;padding:10px;border-radius:14px;background:var(--pink-soft)}
+.slot{aspect-ratio:4/3;max-width:100%;border-radius:10px;background:#fff;border:2px dashed #f59ac9;display:grid;place-items:center;overflow:hidden;font-family:var(--display);color:#f59ac9;font-size:22px}
+.slot canvas{width:100%;height:100%;display:block}
+.slot.filled{border:2px solid #fff;animation:pop-in .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop-in{0%{transform:scale(.6)}100%{transform:scale(1)}}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:40px;height:40px;border-radius:50%;border:3px solid var(--plum);cursor:pointer;padding:0;position:relative}
+.swatch[aria-pressed="true"]::after{content:"♥";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 0 3px var(--plum)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--bubble);border:2.5px solid var(--plum);border-radius:14px;padding:10px 12px;font:inherit;font-size:16px;color:var(--plum);cursor:pointer}
+.toggle .knob{width:46px;height:26px;border-radius:999px;background:#ddd;position:relative;border:2px solid var(--plum);flex:none}
+.toggle .knob::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--plum);transition:left .15s}
+.toggle[aria-pressed="true"] .knob{background:var(--pink)}
+.toggle[aria-pressed="true"] .knob::after{left:20px}
+.howto{margin:0;padding-left:20px;font-size:15px;line-height:1.7}
+
+/* ---------- result / rakugaki ---------- */
+.result{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:28px;align-items:start}
+.result-canvas{display:flex;justify-content:center;min-width:0}
+#out{
+  max-width:100%;max-height:82vh;width:auto;height:auto;border-radius:12px;
+  border:3px solid var(--plum);box-shadow:8px 8px 0 var(--plum);touch-action:none;cursor:crosshair;background:#fff
+}
+.tools{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tools .title{font-family:var(--display);font-size:clamp(26px,4vw,40px);margin:0;color:var(--pink);-webkit-text-stroke:1.5px var(--plum);text-shadow:3px 3px 0 #fff,5px 5px 0 var(--plum)}
+.tools .sub{margin:0;font-size:17px}
+.toolrow{display:flex;gap:8px;flex-wrap:wrap}
+.tool{font-family:var(--display);font-size:15px;background:#fff;color:var(--plum);border:2.5px solid var(--plum);border-radius:999px;padding:8px 16px;cursor:pointer}
+.tool[aria-pressed="true"]{background:var(--plum);color:#fff}
+.stickers{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px}
+.stk{height:54px;border-radius:14px;border:2.5px solid var(--plum);background:var(--bubble);cursor:pointer;font-size:28px;font-family:var(--emoji);padding:0;color:var(--plum)}
+.stk.txt{font-family:var(--display);font-size:13px;color:var(--pink)}
+.stk[aria-pressed="true"]{background:var(--lemon);box-shadow:inset 0 0 0 2px #fff}
+.pens{display:flex;gap:10px;flex-wrap:wrap}
+label.range{display:flex;align-items:center;gap:10px;font-size:15px}
+label.range input{flex:1;accent-color:var(--pink);min-width:0}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.note{font-size:14px;opacity:.75;margin:0}
+
+footer{text-align:center;font-size:14px;opacity:.7}
+
+@media (max-width:860px){
+  .booth{grid-template-columns:1fr}
+  .slots{grid-template-columns:repeat(4,1fr)}
+  .result{grid-template-columns:1fr}
+  #out{max-height:70vh}
+}
+@media (max-width:520px){
+  .hint{padding-right:14px;gap:10px}
+  .hint small{display:none}
+  .ring{width:46px;height:46px}
+  .chip{font-size:13px;padding:6px 10px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="jp">キラキラ4CUT</div>
+      <div class="kr">키라키라 네컷 · 셀프 포토부스</div>
+    </div>
+    <div class="chips">
+      <span class="chip" id="camChip" data-s="idle"><span class="dot"></span><span>카메라 꺼짐</span></span>
+      <span class="chip" id="handChip" data-s="wait"><span class="dot"></span><span>손 인식 준비 중…</span></span>
+    </div>
+  </header>
+
+  <!-- ========== 촬영 화면 ========== -->
+  <main class="booth" id="booth">
+    <section class="stage-card">
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted></video>
+        <span class="spark s1">✨</span><span class="spark s2">💖</span><span class="spark s3">⭐</span><span class="spark s4">✨</span>
+
+        <div class="overlay"><div id="count" class="count"></div></div>
+        <div class="shot-label" id="shotLabel" hidden></div>
+        <div class="flash" id="flash"></div>
+
+        <div class="hint" id="hint" hidden>
+          <div class="ring">
+            <svg viewBox="0 0 60 60"><circle class="track" cx="30" cy="30" r="25" fill="none" stroke-width="7"/><circle class="bar" id="ringBar" cx="30" cy="30" r="25" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08"/></svg>
+            <span class="ico">✌️</span>
+          </div>
+          <div><b id="hintTitle">브이(✌️)를 1초 보여주면 시작!</b><small id="hintSub">손이 화면 안에 또렷하게 보이게 해 주세요</small></div>
+        </div>
+
+        <div class="overlay splash" id="splash">
+          <h2>どうぞ! 네 컷 찍으러 왔어요?</h2>
+          <p>카메라를 켜고 손으로 ✌️ 브이를 만들면<br>4초 카운트다운과 함께 네 번 찍어요.</p>
+          <button class="btn big" id="camBtn" type="button">📸 카메라 켜기</button>
+          <p class="err" id="camErr" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel">
+        <h3>MY 4CUT <span id="shotCount">0 / 4</span></h3>
+        <div class="slots" id="slots">
+          <div class="slot">1</div><div class="slot">2</div><div class="slot">3</div><div class="slot">4</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>찍는 법</h3>
+        <ol class="howto">
+          <li>카메라를 켜요</li>
+          <li>✌️ 브이를 1초 동안 유지</li>
+          <li>4 · 3 · 2 · 1 찰칵! × 4번</li>
+          <li>스티커와 펜으로 꾸미기</li>
+        </ol>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ========== 꾸미기 화면 ========== -->
+  <section class="result" id="result" hidden>
+    <div class="result-canvas"><canvas id="out" aria-label="완성된 네컷 사진"></canvas></div>
+    <div class="tools">
+      <h2 class="title">らくがきタイム!</h2>
+      <p class="sub">낙서 타임! 스티커를 골라 사진을 톡 누르면 붙어요. 붙인 스티커는 끌어서 옮길 수 있어요.</p>
+
+      <div class="panel">
+        <h3>프레임 컬러</h3>
+        <div class="swatches" id="themeSw"></div>
+      </div>
+
+      <div class="panel">
+        <h3>꾸미기 도구</h3>
+        <div class="toolrow" style="margin-bottom:12px">
+          <button class="tool" type="button" data-tool="sticker" aria-pressed="true">💖 스티커</button>
+          <button class="tool" type="button" data-tool="pen" aria-pressed="false">🖊 네온펜</button>
+        </div>
+        <div id="stickerBox">
+          <div class="stickers" id="stickers"></div>
+          <label class="range" style="margin-top:12px">크기 <input id="stkSize" type="range" min="70" max="320" value="160"></label>
+        </div>
+        <div id="penBox" hidden>
+          <div class="pens" id="pens"></div>
+          <label class="range" style="margin-top:12px">굵기 <input id="penSize" type="range" min="8" max="40" value="18"></label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <button class="toggle" type="button" id="beautyBtn" aria-pressed="true"><span>✨ 뽀샤시(美肌) 보정</span><span class="knob"></span></button>
+      </div>
+
+      <div class="actions">
+        <button class="btn white" type="button" id="undoBtn">↩ 되돌리기</button>
+        <button class="btn white" type="button" id="clearBtn">🧽 낙서 지우기</button>
+      </div>
+      <div class="actions">
+        <button class="btn pink big" type="button" id="saveBtn">💾 사진 저장</button>
+        <button class="btn big" type="button" id="retakeBtn">📸 다시 찍기</button>
+      </div>
+      <p class="note">사진은 이 브라우저 안에서만 만들어지고 어디에도 업로드되지 않아요.</p>
+    </div>
+  </section>
+
+  <footer>키라키라 네컷 · 손 인식: MediaPipe Gesture Recognizer</footer>
+</div>
+
+<script type="module">
+import { GestureRecognizer, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+const $ = s => document.querySelector(s);
+const video = $("#video");
+const CELL_W = 1080, CELL_H = 810;           // 4:3 한 컷
+const HOLD_MS = 1000;                        // 제스처 유지 시간
+const COUNT_FROM = 4;                        // 4초 카운트다운
+const POSES = ["볼하트 🫶", "브이 ✌️", "고양이 손 🐱", "자유 포즈!"];
+
+const THEMES = {
+  pink:     { name:"핑크",   bg:["#ff9bd2","#ffc8e6","#ffb0dc"], dot:"rgba(255,255,255,.6)", ink:"#ff3d9a", line:"#3b1f4f", border:"#ffffff" },
+  holo:     { name:"홀로",   bg:["#ffd1f0","#d6f5ff","#fff3c4","#e3d4ff"], dot:"rgba(255,255,255,.7)", ink:"#ff5fb1", line:"#3b1f4f", border:"#ffffff" },
+  mint:     { name:"민트",   bg:["#8ff0dc","#d2fff4","#a6f3ff"], dot:"rgba(255,255,255,.65)", ink:"#0f9e88", line:"#164a43", border:"#ffffff" },
+  lavender: { name:"라벤더", bg:["#c3a8ff","#efe6ff","#ffc8f0"], dot:"rgba(255,255,255,.6)", ink:"#7b4dff", line:"#2e1d5c", border:"#ffffff" },
+  night:    { name:"나이트", bg:["#24183a","#3b1f4f","#1a1430"], dot:"rgba(255,170,230,.22)", ink:"#ff8fd0", line:"#ffffff", border:"#ffe3f4" },
+};
+const STICKERS = ["💖","✨","⭐","🎀","🐰","🌸","🍓","👑","🦋","🍒","🧸","💫","LOVE","BFF","かわいい","최고♡","ピース","SMILE"];
+const PENS = ["#ff4fa3","#4fb3ff","#ffd93b","#a66bff","#3fe0a6","#ffffff"];
+
+const state = {
+  phase: "splash",          // splash | idle | shooting | done
+  shots: [],
+  theme: "pink",
+  beauty: true,
+  layers: [],               // {kind:'sticker', s, x, y, size, rot} | {kind:'stroke', color, w, pts:[]}
+  tool: "sticker",
+  sticker: "💖",
+  pen: PENS[0],
+};
+
+/* ---------- 상태 칩 ---------- */
+function setChip(el, s, text){ el.dataset.s = s; el.lastElementChild.textContent = text; }
+
+/* ---------- 사운드 ---------- */
+let actx = null;
+function ensureAudio(){
+  try{ actx ??= new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === "suspended") actx.resume(); }catch(e){}
+}
+function beep(freq, dur = .12){
+  if(!actx) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(.0001, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.25, actx.currentTime + .01);
+  g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + dur);
+  o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur + .02);
+}
+function shutter(){
+  if(!actx) return;
+  const len = actx.sampleRate * .18, buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = actx.createBufferSource(), g = actx.createGain(); g.gain.value = .5;
+  src.buffer = buf; src.connect(g).connect(actx.destination); src.start();
+  setTimeout(() => beep(1760, .08), 120);
+}
+
+/* ---------- 카메라 ---------- */
+async function startCamera(){
+  ensureAudio();
+  const err = $("#camErr"); err.hidden = true;
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:"user", width:{ ideal:1280 }, height:{ ideal:960 } }, audio:false
+    });
+    video.srcObject = stream;
+    await video.play();
+    setChip($("#camChip"), "ok", "카메라 ON");
+    $("#splash").hidden = true;
+    toIdle();
+  }catch(e){
+    setChip($("#camChip"), "err", "카메라 권한 필요");
+    err.textContent = e && e.name === "NotAllowedError"
+      ? "카메라 권한이 막혀 있어요. 주소창 왼쪽의 자물쇠 아이콘에서 카메라를 허용한 뒤 다시 눌러 주세요."
+      : "카메라를 찾지 못했어요. 다른 앱이 카메라를 쓰고 있지 않은지 확인한 뒤 다시 눌러 주세요.";
+    err.hidden = false;
+  }
+}
+$("#camBtn").addEventListener("click", startCamera);
+
+function toIdle(){
+  state.phase = "idle";
+  $("#hint").hidden = false;
+  setRing(0);
+  updateHint();
+}
+
+/* ---------- 손 제스처 인식 ---------- */
+let recognizer = null, handReady = false;
+async function loadRecognizer(){
+  try{
+    const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    const opts = delegate => ({
+      baseOptions:{
+        modelAssetPath:"https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+        delegate
+      },
+      runningMode:"VIDEO", numHands:2
+    });
+    try{ recognizer = await GestureRecognizer.createFromOptions(fileset, opts("GPU")); }
+    catch(e){ recognizer = await GestureRecognizer.createFromOptions(fileset, opts("CPU")); }
+    handReady = true;
+    setChip($("#handChip"), "ok", "손 인식 ON");
+  }catch(e){
+    console.error(e);
+    setChip($("#handChip"), "err", "손 인식 실패 · 스페이스바로 시작");
+  }
+  updateHint();
+}
+loadRecognizer();
+
+function updateHint(){
+  if(handReady){
+    $("#hintTitle").textContent = "브이(✌️)를 1초 보여주면 시작!";
+    $("#hintSub").textContent = "손이 화면 안에 또렷하게 보이게 해 주세요";
+  }else if(recognizer === null && $("#handChip").dataset.s === "err"){
+    $("#hintTitle").textContent = "스페이스바를 누르면 시작!";
+    $("#hintSub").textContent = "손 인식 모델을 불러오지 못했어요 (인터넷 연결 확인)";
+  }else{
+    $("#hintTitle").textContent = "손 인식 준비 중…";
+    $("#hintSub").textContent = "잠시만 기다려 주세요";
+  }
+}
+
+const RING_LEN = 157.08;
+function setRing(p){ $("#ringBar").style.strokeDashoffset = String(RING_LEN * (1 - p)); }
+
+let lastVideoTime = -1, holdStart = 0, lastSeen = 0, lastRun = 0;
+function loop(){
+  requestAnimationFrame(loop);
+  if(state.phase !== "idle" || !recognizer || video.readyState < 2) return;
+  const now = performance.now();
+  if(now - lastRun < 60 || video.currentTime === lastVideoTime) return;   // ~15fps
+  lastRun = now; lastVideoTime = video.currentTime;
+
+  let res;
+  try{ res = recognizer.recognizeForVideo(video, now); }catch(e){ return; }
+  const seen = (res.gestures || []).some(h => h[0] && h[0].categoryName === "Victory" && h[0].score > .55);
+
+  if(seen){ if(!holdStart) holdStart = now; lastSeen = now; }
+  else if(now - lastSeen > 280){ holdStart = 0; }
+
+  const p = holdStart ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
+  setRing(p);
+  if(p > 0 && p < 1) $("#hintTitle").textContent = "좋아요! 그대로~ ✌️";
+  else if(p === 0) updateHint();
+  if(p >= 1){ holdStart = 0; startSession(); }
+}
+requestAnimationFrame(loop);
+
+document.addEventListener("keydown", e => {
+  if(e.code === "Space" && state.phase === "idle"){ e.preventDefault(); startSession(); }
+});
+
+/* ---------- 촬영 ---------- */
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function bounce(el, text, cls){
+  el.textContent = text; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+}
+
+async function startSession(){
+  if(state.phase !== "idle") return;
+  ensureAudio();
+  state.phase = "shooting";
+  state.shots = []; state.layers = [];
+  resetSlots();
+  $("#hint").hidden = true;
+  const label = $("#shotLabel"), count = $("#count");
+
+  for(let i = 0; i < 4; i++){
+    label.innerHTML = "";
+    const a = document.createElement("span"); a.textContent = `SHOT ${i + 1} / 4`;
+    const b = document.createElement("em"); b.textContent = POSES[i];
+    label.append(a, b); label.hidden = false;
+
+    for(let n = COUNT_FROM; n >= 1; n--){
+      count.className = "count";
+      bounce(count, String(n), "pop");
+      beep(n === 1 ? 1320 : 880);
+      await wait(1000);
+    }
+    count.textContent = "";
+    bounce($("#flash"), "", "go");
+    shutter();
+    const shot = capture();
+    state.shots.push(shot);
+    fillSlot(i, shot);
+    count.className = "ok"; count.textContent = i < 3 ? "OK!" : "かわいい!";
+    await wait(i < 3 ? 1100 : 1300);
+    count.textContent = ""; count.className = "count";
+  }
+  label.hidden = true;
+  state.phase = "done";
+  openResult();
+}
+
+function capture(){
+  const vw = video.videoWidth, vh = video.videoHeight, ratio = CELL_W / CELL_H;
+  let sw = vw, sh = vw / ratio;
+  if(sh > vh){ sh = vh; sw = vh * ratio; }
+  const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+  const c = document.createElement("canvas"); c.width = CELL_W; c.height = CELL_H;
+  const x = c.getContext("2d");
+  x.translate(CELL_W, 0); x.scale(-1, 1);           // 거울 모드 그대로 저장
+  x.drawImage(video, sx, sy, sw, sh, 0, 0, CELL_W, CELL_H);
+  return c;
+}
+
+function resetSlots(){
+  const slots = $("#slots").children;
+  for(let i = 0; i < 4; i++){ slots[i].className = "slot"; slots[i].textContent = String(i + 1); }
+  $("#shotCount").textContent = "0 / 4";
+}
+function fillSlot(i, shot){
+  const slot = $("#slots").children[i];
+  const c = document.createElement("canvas"); c.width = 320; c.height = 240;
+  c.getContext("2d").drawImage(shot, 0, 0, 320, 240);
+  slot.textContent = ""; slot.appendChild(c); slot.classList.add("filled");
+  $("#shotCount").textContent = `${i + 1} / 4`;
+}
+
+/* ---------- 네컷 합성 ---------- */
+const W = 1200, PAD = 60, HEAD = 200, GAP = 34, FOOT = 240;
+const H = HEAD + 4 * CELL_H + 3 * GAP + FOOT;
+let base = null;   // 배경 + 사진 캐시
+
+function roundRect(x, X, Y, w, h, r){
+  x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r);
+  x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath();
+}
+function sparkle(x, cx, cy, r, color){
+  x.save(); x.fillStyle = color; x.beginPath();
+  for(let i = 0; i < 8; i++){
+    const a = i * Math.PI / 4, rr = i % 2 ? r * .28 : r;
+    x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+  }
+  x.closePath(); x.fill(); x.restore();
+}
+function beautify(shot){
+  const c = document.createElement("canvas"); c.width = CELL_W; c.height = CELL_H;
+  const x = c.getContext("2d");
+  x.filter = "brightness(1.08) contrast(0.93) saturate(1.15)";
+  x.drawImage(shot, 0, 0);
+  x.filter = "blur(14px) brightness(1.15)";
+  x.globalAlpha = .28; x.globalCompositeOperation = "screen";
+  x.drawImage(shot, 0, 0);
+  x.globalAlpha = 1; x.globalCompositeOperation = "source-over"; x.filter = "none";
+  // 살짝 핑크빛 비네팅
+  const g = x.createRadialGradient(CELL_W / 2, CELL_H / 2, CELL_H * .45, CELL_W / 2, CELL_H / 2, CELL_W * .7);
+  g.addColorStop(0, "rgba(255,200,230,0)"); g.addColorStop(1, "rgba(255,180,220,.28)");
+  x.fillStyle = g; x.fillRect(0, 0, CELL_W, CELL_H);
+  return c;
+}
+
+function buildBase(){
+  const t = THEMES[state.theme];
+  base = document.createElement("canvas"); base.width = W; base.height = H;
+  const x = base.getContext("2d");
+
+  const g = x.createLinearGradient(0, 0, W, H);
+  t.bg.forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c));
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = t.dot;
+  for(let yy = 0, row = 0; yy < H + 40; yy += 40, row++){
+    for(let xx = row % 2 ? 20 : 0; xx < W + 40; xx += 40){ x.beginPath(); x.arc(xx, yy, 5, 0, Math.PI * 2); x.fill(); }
+  }
+
+  // 헤더
+  x.textAlign = "center"; x.textBaseline = "middle"; x.lineJoin = "round";
+  x.font = '86px "Mochiy Pop One", "Jua", sans-serif';
+  x.lineWidth = 22; x.strokeStyle = t.line; x.strokeText("KIRA KIRA", W / 2, 104);
+  x.lineWidth = 10; x.strokeStyle = "#fff"; x.strokeText("KIRA KIRA", W / 2, 104);
+  x.fillStyle = t.ink; x.fillText("KIRA KIRA", W / 2, 104);
+  sparkle(x, 150, 80, 34, "#fff"); sparkle(x, 1060, 128, 26, "#fff"); sparkle(x, 1100, 60, 16, t.ink);
+
+  // 사진 4컷
+  for(let i = 0; i < 4; i++){
+    const y = HEAD + i * (CELL_H + GAP);
+    x.save();
+    x.shadowColor = "rgba(59,31,79,.25)"; x.shadowBlur = 0; x.shadowOffsetX = 8; x.shadowOffsetY = 8;
+    x.fillStyle = t.border; roundRect(x, PAD - 14, y - 14, CELL_W + 28, CELL_H + 28, 34); x.fill();
+    x.restore();
+    x.save(); roundRect(x, PAD, y, CELL_W, CELL_H, 24); x.clip();
+    const shot = state.shots[i];
+    if(shot) x.drawImage(state.beauty ? beautify(shot) : shot, PAD, y);
+    else { x.fillStyle = "#f5e6ef"; x.fillRect(PAD, y, CELL_W, CELL_H); }
+    x.restore();
+  }
+
+  // 푸터
+  const fy = HEAD + 4 * CELL_H + 3 * GAP;
+  const d = new Date();
+  const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  x.font = '64px "Mochiy Pop One", "Jua", sans-serif';
+  x.lineWidth = 16; x.strokeStyle = t.line; x.strokeText("4CUT ♡", W / 2, fy + 100);
+  x.fillStyle = "#fff"; x.fillText("4CUT ♡", W / 2, fy + 100);
+  x.font = '40px "Jua", sans-serif'; x.fillStyle = t.line === "#ffffff" ? "#ffe3f4" : t.line;
+  x.fillText(`키라키라 네컷 · ${date}`, W / 2, fy + 176);
+  sparkle(x, 200, fy + 96, 28, t.ink); sparkle(x, 1000, fy + 96, 28, t.ink);
+}
+
+function drawLayer(x, l){
+  if(l.kind === "stroke"){
+    if(l.pts.length < 1) return;
+    x.save(); x.lineCap = "round"; x.lineJoin = "round";
+    const path = () => {
+      x.beginPath(); x.moveTo(l.pts[0][0], l.pts[0][1]);
+      for(const p of l.pts) x.lineTo(p[0], p[1]);
+      if(l.pts.length === 1) x.lineTo(l.pts[0][0] + .1, l.pts[0][1]);
+    };
+    x.shadowColor = l.color; x.shadowBlur = l.w * 1.4;
+    x.strokeStyle = l.color; x.lineWidth = l.w * 1.6; path(); x.stroke();
+    x.shadowBlur = 0; x.strokeStyle = l.color === "#ffffff" ? "#ff9bd2" : "#ffffff"; x.lineWidth = l.w * .55; path(); x.stroke();
+    x.restore();
+    return;
+  }
+  x.save(); x.translate(l.x, l.y); x.rotate(l.rot);
+  x.textAlign = "center"; x.textBaseline = "middle";
+  const isText = /[A-Za-z가-힣ぁ-んァ-ン]/.test(l.s);
+  if(isText){
+    const fs = l.size * .42;
+    x.font = `${fs}px "Mochiy Pop One", "Jua", sans-serif`; x.lineJoin = "round";
+    x.lineWidth = fs * .34; x.strokeStyle = "#3b1f4f"; x.strokeText(l.s, 0, 0);
+    x.lineWidth = fs * .18; x.strokeStyle = "#fff"; x.strokeText(l.s, 0, 0);
+    x.fillStyle = "#ff4fa3"; x.fillText(l.s, 0, 0);
+  }else{
+    x.font = `${l.size}px ${getComputedStyle(document.documentElement).getPropertyValue("--emoji")}`;
+    x.shadowColor = "rgba(255,255,255,.95)"; x.shadowBlur = 0;
+    for(const [dx, dy] of [[4,0],[-4,0],[0,4],[0,-4]]){ x.shadowOffsetX = dx; x.shadowOffsetY = dy; x.fillText(l.s, 0, 0); }
+    x.shadowOffsetX = 0; x.shadowOffsetY = 0; x.fillText(l.s, 0, 0);
+  }
+  x.restore();
+}
+
+const out = $("#out");
+function render(){
+  if(!base) buildBase();
+  out.width = W; out.height = H;
+  const x = out.getContext("2d");
+  x.drawImage(base, 0, 0);
+  for(const l of state.layers) drawLayer(x, l);
+}
+
+async function openResult(){
+  try{ await Promise.all([document.fonts.load('86px "Mochiy Pop One"'), document.fonts.load('40px "Jua"')]); }catch(e){}
+  base = null; render();
+  $("#booth").hidden = true; $("#result").hidden = false;
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+/* ---------- 꾸미기 UI ---------- */
+const themeSw = $("#themeSw");
+for(const [k, t] of Object.entries(THEMES)){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "swatch"; b.title = t.name; b.setAttribute("aria-label", `${t.name} 프레임`);
+  b.style.background = `linear-gradient(135deg, ${t.bg.join(",")})`;
+  b.setAttribute("aria-pressed", String(k === state.theme));
+  b.addEventListener("click", () => {
+    state.theme = k; base = null; render();
+    themeSw.querySelectorAll(".swatch").forEach(s => s.setAttribute("aria-pressed", String(s === b)));
+  });
+  themeSw.appendChild(b);
+}
+const stickersEl = $("#stickers");
+for(const s of STICKERS){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "stk" + (/[A-Za-z가-힣ぁ-んァ-ン]/.test(s) ? " txt" : "");
+  b.textContent = s; b.setAttribute("aria-pressed", String(s === state.sticker));
+  b.addEventListener("click", () => {
+    state.sticker = s; setTool("sticker");
+    stickersEl.querySelectorAll(".stk").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  });
+  stickersEl.appendChild(b);
+}
+const pensEl = $("#pens");
+for(const c of PENS){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "swatch"; b.style.background = c; b.setAttribute("aria-label", `펜 색 ${c}`);
+  b.setAttribute("aria-pressed", String(c === state.pen));
+  b.addEventListener("click", () => {
+    state.pen = c;
+    pensEl.querySelectorAll(".swatch").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  });
+  pensEl.appendChild(b);
+}
+function setTool(t){
+  state.tool = t;
+  document.querySelectorAll(".tool").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tool === t)));
+  $("#stickerBox").hidden = t !== "sticker"; $("#penBox").hidden = t !== "pen";
+}
+document.querySelectorAll(".tool").forEach(b => b.addEventListener("click", () => setTool(b.dataset.tool)));
+
+$("#beautyBtn").addEventListener("click", e => {
+  state.beauty = !state.beauty; e.currentTarget.setAttribute("aria-pressed", String(state.beauty));
+  base = null; render();
+});
+$("#undoBtn").addEventListener("click", () => { state.layers.pop(); render(); });
+$("#clearBtn").addEventListener("click", () => { state.layers = []; render(); });
+$("#retakeBtn").addEventListener("click", () => {
+  state.shots = []; state.layers = []; base = null; resetSlots();
+  $("#result").hidden = true; $("#booth").hidden = false;
+  toIdle();
+});
+$("#saveBtn").addEventListener("click", () => {
+  out.toBlob(blob => {
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `kirakira-4cut-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/png");
+});
+
+/* 캔버스 포인터: 스티커 붙이기·옮기기 / 네온펜 */
+function toCanvas(e){
+  const r = out.getBoundingClientRect();
+  return [(e.clientX - r.left) * out.width / r.width, (e.clientY - r.top) * out.height / r.height];
+}
+let drag = null, stroke = null;
+out.addEventListener("pointerdown", e => {
+  out.setPointerCapture(e.pointerId);
+  const [px, py] = toCanvas(e);
+  if(state.tool === "pen"){
+    stroke = { kind:"stroke", color:state.pen, w:+$("#penSize").value, pts:[[px, py]] };
+    state.layers.push(stroke); render(); return;
+  }
+  for(let i = state.layers.length - 1; i >= 0; i--){
+    const l = state.layers[i];
+    if(l.kind === "sticker" && Math.hypot(l.x - px, l.y - py) < l.size * .55){
+      state.layers.splice(i, 1); state.layers.push(l);          // 맨 위로
+      drag = { l, dx:l.x - px, dy:l.y - py, moved:false }; render(); return;
+    }
+  }
+  state.layers.push({ kind:"sticker", s:state.sticker, x:px, y:py, size:+$("#stkSize").value, rot:(Math.random() - .5) * .5 });
+  render();
+});
+out.addEventListener("pointermove", e => {
+  if(!drag && !stroke) return;
+  const [px, py] = toCanvas(e);
+  if(stroke){ stroke.pts.push([px, py]); render(); }
+  else { drag.l.x = px + drag.dx; drag.l.y = py + drag.dy; render(); }
+});
+const end = () => { drag = null; stroke = null; };
+out.addEventListener("pointerup", end);
+out.addEventListener("pointercancel", end);
+</script>
+</body>
+</html>
